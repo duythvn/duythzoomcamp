@@ -1,0 +1,158 @@
+#BLOCK_data_loader
+
+import pandas as pd
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
+
+
+@data_loader
+def load_data(*args, **kwargs):
+    
+    taxi_dtypes = {
+                    'VendorID': pd.Int64Dtype(),
+                    'passenger_count': pd.Int64Dtype(),
+                    'trip_distance': float,
+                    'RatecodeID':pd.Int64Dtype(),
+                    'store_and_fwd_flag':str,
+                    'PULocationID':pd.Int64Dtype(),
+                    'DOLocationID':pd.Int64Dtype(),
+                    'payment_type': pd.Int64Dtype(),
+                    'fare_amount': float,
+                    'extra':float,
+                    'mta_tax':float,
+                    'tip_amount':float,
+                    'tolls_amount':float,
+                    'improvement_surcharge':float,
+                    'total_amount':float,
+                    'congestion_surcharge':float
+                }
+
+    #native date parsing 
+    parse_dates = ['tpep_pickup_datetime', 'tpep_dropoff_datetime']
+    main_df=pd.DataFrame()
+    files = ['./magiczc/data/green_tripdata_2020-10.csv.gz','./magiczc/data/green_tripdata_2020-11.csv.gz','./magiczc/data/green_tripdata_2020-12.csv.gz']
+    for file in files:
+        
+        df=pd.read_csv(file,sep=',', compression='gzip', dtype=taxi_dtypes, parse_dates=parse_dates)
+        main_df=pd.concat((main_df,df))
+    return main_df
+
+   
+
+
+@test
+def test_output(output, *args) -> None:
+    """
+    Template code for testing the output of the block.
+    """
+    assert output is not None, 'The output is undefined'
+
+
+
+#BLOCK_transformer
+import pandas as pd
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
+
+
+@transformer
+def transform(data, *args, **kwargs):
+    # Specify your transformation logic here
+    data.columns = (data.columns
+                .str.replace('(?<=[a-z])(?=[A-Z])', '_', regex=True)                
+                .str.lower()
+             )
+    #data[ data['trip_distance'] > 0 ]
+    filtered_df= data.query('trip_distance > 0  and passenger_count > 0')
+    filtered_df['lpep_pickup_date '] = filtered_df['lpep_pickup_datetime'].dt.date
+
+    #print unique values from vendor_id
+    print(filtered_df['vendor_id'].unique())
+
+    return filtered_df
+
+@test
+def test_output(output, *args) -> None:
+    """
+    Template code for testing the output of the block.
+    """
+    assert 'vendor_id' in output.columns,'vendor_id  not in df'
+    assert output['passenger_count'].isin([0]).sum() == 0 ,'trip with 0 passenger found'
+    assert output['trip_distance'].isin([0]).sum() == 0 , 'trip with 0 distance found'
+    assert output is not None, 'The output is undefined'
+
+
+
+#BLOCK_POST_TO_POSTGRES
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.postgres import Postgres
+from pandas import DataFrame
+from os import path
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data_to_postgres(df: DataFrame, **kwargs) -> None:
+    """
+    Template for exporting data to a PostgreSQL database.
+    Specify your configuration settings in 'io_config.yaml'.
+
+    Docs: https://docs.mage.ai/design/data-loading#postgresql
+    """
+    schema_name = 'mage'  # Specify the name of the schema to export data to
+    table_name = 'green_taxi'  # Specify the name of the table to export data to
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'dev'
+
+    with Postgres.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
+        loader.export(
+            df,
+            schema_name,
+            table_name,
+            index=False,  # Specifies whether to include index in exported table
+            if_exists='replace',  # Specify resolution policy if table name already exists
+        )
+
+
+
+#BLOCK_POST_TO_GCS (REMOVED SENSITIVE DATA)
+import pyarrow as pa
+import pyarrow.parquet as pq
+import os
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.google_cloud_storage import GoogleCloudStorage
+from pandas import DataFrame
+from os import path
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+
+#upload to google partition
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "...................."
+bucket_name = '.........'
+
+project_id ='.............'
+table_name='green_taxi'
+root_path=f'{bucket_name}/{table_name}'
+
+@data_exporter
+def export_data(data, *args, **kwargs):
+    #data['tpep_pickup_datetime']=data['tpep_pickup_datetime'].dt.date
+    table = pa.Table.from_pandas(data)
+    gcs =  pa.fs.GcsFileSystem()
+    pq.write_to_dataset(
+        table,
+        root_path=root_path,
+        partition_cols=['lpep_pickup_date'],
+        filesystem=gcs
+    )
