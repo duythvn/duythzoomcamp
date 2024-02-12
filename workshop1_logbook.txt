@@ -1,0 +1,109 @@
+#Question 1. What is the sum of the outputs of the generator for limit = 5?
+def square_root_generator(limit):
+    n = 1
+    while n <= limit:
+        yield n ** 0.5
+        n += 1
+
+# Example usage:
+limit = 13
+generator = square_root_generator(limit)
+sum_value=0
+for sqrt_value in generator:
+    print(sqrt_value)
+    sum_value +=sqrt_value
+
+
+print(sum_value)
+
+
+#What is the 13th number yielded by the generator?
+def square_root_generator(limit):
+    n = 1
+    while n <= limit:
+        yield n ** 0.5
+        n += 1
+
+# Example usage:
+limit = 13
+generator = square_root_generator(limit)
+sum_value=0
+for sqrt_value in generator:
+    print(sqrt_value)
+    sum_value +=sqrt_value
+
+
+print(sum_value)
+
+
+#Question 3. Append the 2 generators. After correctly appending the data, calculate the sum of all ages of people.
+def people_1():
+    for i in range(1, 6):
+        yield {"ID": i, "Name": f"Person_{i}", "Age": 25 + i, "City": "City_A"}
+
+
+for person in people_1():
+    #print(person)
+    #people1_age+=person['Age']
+    people1.append(person)
+
+
+
+def people_2():
+    for i in range(3, 9):
+        yield {"ID": i, "Name": f"Person_{i}", "Age": 30 + i, "City": "City_B", "Occupation": f"Job_{i}"}
+
+people2=[]
+for person in people_2():
+    #print(person)
+    people2.append(person)
+    #print(person)
+print('printing people2')
+print(type(people2))
+print(people2)
+
+total_people=people1 + people2
+total_age=0
+for person in total_people:
+    total_age+= person['Age']
+print(total_age)
+
+
+
+#Question 4. Merge the 2 generators using the ID column. Calculate the sum of ages of all the people loaded as described above.
+
+#Install the dependencies
+#!pip install pandas
+
+#!pip install dlt[duckdb]
+import pandas as pd
+def people_1():
+    for i in range(1, 6):
+        yield {"ID": i, "Name": f"Person_{i}", "Age": 25 + i, "City": "City_A"}
+#people
+#people1_df=pd.DataFrame(people_1)
+#print(people1_df)
+people1=list(people_1())
+print(people1)
+
+
+def people_2():
+       for i in range(3, 9):
+        yield {"ID": i, "Name": f"Person_{i}", "Age": 30 + i, "City": "City_B", "Occupation": f"Job_{i}"}
+        
+people2=list(people_2())
+print(people2)
+
+people1_df=pd.DataFrame(people1)
+print(people1_df)
+
+people2_df=pd.DataFrame(people2).drop(columns=['Occupation'])
+print(people2_df)
+
+all_people=pd.concat([people1_df,people2_df],ignore_index=False).drop_duplicates(subset='ID',keep='last')
+
+print(all_people)
+total_age=0
+for person_age in all_people['Age'].tolist():
+   total_age+=person_age
+print (total_age)

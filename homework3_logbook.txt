@@ -1,109 +1,38 @@
-#Question 1. What is the sum of the outputs of the generator for limit = 5?
-def square_root_generator(limit):
-    n = 1
-    while n <= limit:
-        yield n ** 0.5
-        n += 1
+##Question 1. What is count of records for the 2022 Green Taxi Data?
+def load_data_from_api(*args, **kwargs):
+    directory = './magiczc/data/green_taxi_2022/'
+    main_df=pd.DataFrame()
+    # native date parsing 
+    for filename in os.listdir(directory):
+        f = os.path.join(directory, filename)
+        # checking if it is a file
+        if os.path.isfile(f):
+            
 
-# Example usage:
-limit = 13
-generator = square_root_generator(limit)
-sum_value=0
-for sqrt_value in generator:
-    print(sqrt_value)
-    sum_value +=sqrt_value
+            df=pd.read_parquet(f)
+            main_df=pd.concat((main_df,df))
+    print(main_df.shape)
+    return main_df
 
-
-print(sum_value)
-
-
-#What is the 13th number yielded by the generator?
-def square_root_generator(limit):
-    n = 1
-    while n <= limit:
-        yield n ** 0.5
-        n += 1
-
-# Example usage:
-limit = 13
-generator = square_root_generator(limit)
-sum_value=0
-for sqrt_value in generator:
-    print(sqrt_value)
-    sum_value +=sqrt_value
+What is the estimated amount of data in the tables?
 
 
-print(sum_value)
+##Question2
+##Write a query to count the distinct number of PULocationIDs for the entire dataset on both the tables.
+SELECT COUNT (DISTINCT pulocationid) FROM `_________.ny_taxi.green_taxi_2022_full`;
 
 
-#Question 3. Append the 2 generators. After correctly appending the data, calculate the sum of all ages of people.
-def people_1():
-    for i in range(1, 6):
-        yield {"ID": i, "Name": f"Person_{i}", "Age": 25 + i, "City": "City_A"}
-
-
-for person in people_1():
-    #print(person)
-    #people1_age+=person['Age']
-    people1.append(person)
+##Question3
+##How many records have a fare_amount of 0?
+SELECT COUNT (*) FROM `___.ny_taxi.green_taxi_2022_full` WHERE FARE_AMOUNT=0
 
 
 
-def people_2():
-    for i in range(3, 9):
-        yield {"ID": i, "Name": f"Person_{i}", "Age": 30 + i, "City": "City_B", "Occupation": f"Job_{i}"}
 
-people2=[]
-for person in people_2():
-    #print(person)
-    people2.append(person)
-    #print(person)
-print('printing people2')
-print(type(people2))
-print(people2)
-
-total_people=people1 + people2
-total_age=0
-for person in total_people:
-    total_age+= person['Age']
-print(total_age)
+#Question 4 - convert to an optimised tables
+CREATE TABLE ny_taxi.green_taxi_2022_optimized
+PARTITION BY DATE(lpep_pickup_datetime)
+CLUSTER BY pulocationid
+AS SELECT * FROM ny_taxi.green_taxi_2022_full
 
 
-
-#Question 4. Merge the 2 generators using the ID column. Calculate the sum of ages of all the people loaded as described above.
-
-#Install the dependencies
-#!pip install pandas
-
-#!pip install dlt[duckdb]
-import pandas as pd
-def people_1():
-    for i in range(1, 6):
-        yield {"ID": i, "Name": f"Person_{i}", "Age": 25 + i, "City": "City_A"}
-#people
-#people1_df=pd.DataFrame(people_1)
-#print(people1_df)
-people1=list(people_1())
-print(people1)
-
-
-def people_2():
-       for i in range(3, 9):
-        yield {"ID": i, "Name": f"Person_{i}", "Age": 30 + i, "City": "City_B", "Occupation": f"Job_{i}"}
-        
-people2=list(people_2())
-print(people2)
-
-people1_df=pd.DataFrame(people1)
-print(people1_df)
-
-people2_df=pd.DataFrame(people2).drop(columns=['Occupation'])
-print(people2_df)
-
-all_people=pd.concat([people1_df,people2_df],ignore_index=False).drop_duplicates(subset='ID',keep='last')
-
-print(all_people)
-total_age=0
-for person_age in all_people['Age'].tolist():
-   total_age+=person_age
-print (total_age)
