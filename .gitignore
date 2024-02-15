@@ -3,3 +3,6 @@
 target/
 dbt_packages/
 logs/
+04-analytics-engineering/target/
+04-analytics-engineering/dbt_packages/
+04-analytics-engineering/logs/
