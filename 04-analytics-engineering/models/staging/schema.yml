@@ -13,8 +13,25 @@ sources:
       - name: yellow_tripdata
          # freshness:
            # error_after: {count: 6, period: hour}
+      - name: fhv_tripdata
 
 models:
+    - name: stg_fhv_tripdata
+      description: >
+        fhv data for homework
+      columns:
+        - name: dispatching_base_num  
+        - name: pickup_datetime 
+          description: The date and time when the meter was engaged.
+        - name: dropoff_datetime 
+          description: The date and time when the meter was disengaged.
+        - name: dropoff_locationid 
+          description: locationid where the meter was engaged.
+        - name: pickup_locationid
+          description: locationid where the meter was engaged.
+        - name: SR_Flag
+        - name: Affiliated_base_number
+
     - name: stg_green_tripdata
       description: >
         Trip made by green taxis, also known as boro taxis and street-hail liveries.
@@ -189,3 +206,4 @@ models:
             description: Total amount of all tolls paid in trip.
           - name: total_amount 
             description: The total amount charged to passengers. Does not include cash tips.
+        
