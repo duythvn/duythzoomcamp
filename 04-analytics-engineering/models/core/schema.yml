@@ -129,7 +129,7 @@ models:
         description: ""
 
 
-  - name: fhvfact_trips
+  - name: fhv_fact_trips
     description: >
       FHV trips corresponding to both service zones (Green and yellow).
       The table contains records where both pickup and dropoff locations are valid and known zones. 
