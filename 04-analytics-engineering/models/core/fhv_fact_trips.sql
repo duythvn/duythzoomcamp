@@ -4,7 +4,7 @@
     )
 }}
 
-trips_unioned as (
+with trips_unioned as (
     select *
     from {{ ref('stg_fhv_tripdata') }}
 ),
